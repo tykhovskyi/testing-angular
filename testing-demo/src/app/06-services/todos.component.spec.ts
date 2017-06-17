@@ -2,6 +2,8 @@ import { TodosComponent } from './todos.component';
 import { TodoService } from './todo.service';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/from';
+import 'rxjs/add/observable/empty';
+import 'rxjs/add/observable/throw';
 
 describe('TodosComponent', () => {
   let component: TodosComponent;
@@ -15,12 +17,39 @@ describe('TodosComponent', () => {
   it('should set todos property with the items returned from the server', () => {
     let todos = [1, 2, 3];
     spyOn(service, 'getTodos').and.callFake(() => {
-      console.log('qqwer');
       return Observable.from([todos]);
     });
 
     component.ngOnInit();
 
     expect(component.todos).toBe(todos);
+  });
+
+  it('should call the server to save the changes when a new item is added', () => {
+    let spy = spyOn(service, 'add').and.callFake(t => {
+      return Observable.empty();
+    });
+
+    component.add();
+
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('should add the new todo returned from the server', () => {
+    let todo = { id: 1 };
+    spyOn(service, 'add').and.returnValue(Observable.from([ todo ]));
+
+    component.add();
+
+    expect(component.todos.indexOf(todo)).toBeGreaterThan(-1);
+  });
+
+  it('should set the message property if server.add method returns an error', () => {
+    let error = 'error from the server';
+    spyOn(service, 'add').and.returnValue(Observable.throw(error));
+
+    component.add();
+
+    expect(component.message).toBe(error);
   });
 });
